@@ -169,13 +169,12 @@
             .wifi-wave { width: 50px; height: 80px; }
             .brand-text { font-size: 1.3rem; margin-top: 30px; padding: 0 20px; text-align: center; }
 
-            /* 90 tiles / 45 columns = Exactly 2 horizontal rows */
             .grid-wrapper { width: 500%; height: 120%; top: -10%; left: -200%; }
             .scrolling-grid {
                 grid-template-columns: repeat(45, 1fr); 
                 gap: 15px; padding: 15px;
-                /* Slowed down slightly since the grid is much wider now */
                 animation: scrollRight 45s linear infinite; 
+                align-content: center; /* Forces the 2 rows to snap together in the middle */
             }
         }
 
@@ -185,14 +184,13 @@
             .wifi-wave { width: 35px; height: 60px; margin: 0 10px; }
             .brand-text { font-size: 1.1rem; margin-top: 20px; }
 
-            /* Stretch it wider to keep the tiles from getting too tiny */
             .grid-wrapper { width: 600%; left: -250%; }
             .scrolling-grid {
                 grid-template-columns: repeat(45, 1fr); 
                 gap: 10px; padding: 10px;
+                align-content: center; /* Forces the 2 rows to snap together in the middle */
             }
         }
-
         /* HORIZONTAL SCROLL ANIMATION (Left to Right) */
         @keyframes scrollRight { 
             0% { transform: translateX(-30%); } 
@@ -258,10 +256,10 @@
                 curtain.style.display = 'none';
             }, 500);
             
-            // Step 4: Fire redirect exactly 5.5s after scene starts
+            // Step 4: Fire instant cache-redirect (No Loading Bar)
             setTimeout(() => {
-                window.location.href = 'home/home.html';
-            }, 5600); // 5.5s + 100ms curtain delay
+                window.location.replace('home/home.html');
+            }, 5600);
         };
     </script>
 </body>
