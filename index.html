@@ -163,7 +163,7 @@
             }
         }
 
-      /* PHONE (768px and below) */
+        /* PHONE (768px and below) */
         @media (max-width: 768px) {
             .center-logo { height: 140px; }
             .wifi-wave { width: 50px; height: 80px; }
@@ -174,8 +174,10 @@
                 grid-template-columns: repeat(45, 1fr); 
                 gap: 15px; padding: 15px;
                 animation: scrollRight 45s linear infinite; 
-                align-content: center; /* Forces the 2 rows to snap together in the middle */
+                align-content: center; 
             }
+            /* OLD PHONE FIX: 500vw / 45 columns = 11.1vw. Forces perfect squares. */
+            .tile { height: 11vw; } 
         }
 
         /* SMALL PHONE (480px and below) */
@@ -188,9 +190,12 @@
             .scrolling-grid {
                 grid-template-columns: repeat(45, 1fr); 
                 gap: 10px; padding: 10px;
-                align-content: center; /* Forces the 2 rows to snap together in the middle */
+                align-content: center; 
             }
+            /* OLD PHONE FIX: 600vw / 45 columns = 13.3vw. Forces perfect squares. */
+            .tile { height: 13vw; } 
         }
+
         /* HORIZONTAL SCROLL ANIMATION (Left to Right) */
         @keyframes scrollRight { 
             0% { transform: translateX(-30%); } 
