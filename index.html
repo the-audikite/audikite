@@ -22,6 +22,8 @@
     <link rel="preload" href="grid-icons/grid14.png" as="image">
     <link rel="preload" href="grid-icons/grid15.png" as="image">
 
+    <link rel="prefetch" href="home/home.html">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400&display=swap" rel="stylesheet">
@@ -161,32 +163,32 @@
             }
         }
 
-        /* PHONE (768px and below) */
+      /* PHONE (768px and below) */
         @media (max-width: 768px) {
-            /* 1. Scale down further */
             .center-logo { height: 140px; }
             .wifi-wave { width: 50px; height: 80px; }
-            .brand-text { font-size: 1.3rem; margin-top: 30px; padding: 0 20px; }
+            .brand-text { font-size: 1.3rem; margin-top: 30px; padding: 0 20px; text-align: center; }
 
-            /* 2. Make grid icons even smaller and wider */
-            .grid-wrapper { width: 300%; left: -100%; }
+            /* 90 tiles / 45 columns = Exactly 2 horizontal rows */
+            .grid-wrapper { width: 500%; height: 120%; top: -10%; left: -200%; }
             .scrolling-grid {
-                grid-template-columns: repeat(27, 1fr); /* Even more columns */
+                grid-template-columns: repeat(45, 1fr); 
                 gap: 15px; padding: 15px;
+                /* Slowed down slightly since the grid is much wider now */
+                animation: scrollRight 45s linear infinite; 
             }
         }
 
         /* SMALL PHONE (480px and below) */
         @media (max-width: 480px) {
-            /* 1. Tiny screen scaling */
             .center-logo { height: 100px; }
             .wifi-wave { width: 35px; height: 60px; margin: 0 10px; }
             .brand-text { font-size: 1.1rem; margin-top: 20px; }
 
-            /* 2. Maximum horizontal stretch for tiny icons */
-            .grid-wrapper { width: 400%; left: -150%; }
+            /* Stretch it wider to keep the tiles from getting too tiny */
+            .grid-wrapper { width: 600%; left: -250%; }
             .scrolling-grid {
-                grid-template-columns: repeat(36, 1fr); /* Super wide, small tiles */
+                grid-template-columns: repeat(45, 1fr); 
                 gap: 10px; padding: 10px;
             }
         }
