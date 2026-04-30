@@ -139,6 +139,64 @@
         .is-ready .scene-blackout { animation: finalFadeOut 1s 4.5s ease-in-out forwards; }
         @keyframes finalFadeOut { to { opacity: 1; } }
 
+        /* =========================================
+           RESPONSIVE DESIGN & MOBILE GRID
+           ========================================= */
+
+        /* TABLET (1024px and below) */
+        @media (max-width: 1024px) {
+            /* 1. Scale down the center elements */
+            .center-logo { height: 200px; }
+            .wifi-wave { width: 70px; height: 110px; }
+            .left-wave { margin-right: 15px; } 
+            .right-wave { margin-left: 15px; }
+            .brand-text { font-size: 1.8rem; margin-top: 40px; text-align: center; }
+
+            /* 2. Convert Grid to Horizontal Left-to-Right */
+            .grid-wrapper { width: 200%; height: 120%; top: -10%; left: -50%; }
+            .scrolling-grid {
+                grid-template-columns: repeat(18, 1fr); /* Reflows the 108 tiles wider */
+                gap: 20px; padding: 20px;
+                animation: scrollRight 30s linear infinite; /* New horizontal animation */
+            }
+        }
+
+        /* PHONE (768px and below) */
+        @media (max-width: 768px) {
+            /* 1. Scale down further */
+            .center-logo { height: 140px; }
+            .wifi-wave { width: 50px; height: 80px; }
+            .brand-text { font-size: 1.3rem; margin-top: 30px; padding: 0 20px; }
+
+            /* 2. Make grid icons even smaller and wider */
+            .grid-wrapper { width: 300%; left: -100%; }
+            .scrolling-grid {
+                grid-template-columns: repeat(27, 1fr); /* Even more columns */
+                gap: 15px; padding: 15px;
+            }
+        }
+
+        /* SMALL PHONE (480px and below) */
+        @media (max-width: 480px) {
+            /* 1. Tiny screen scaling */
+            .center-logo { height: 100px; }
+            .wifi-wave { width: 35px; height: 60px; margin: 0 10px; }
+            .brand-text { font-size: 1.1rem; margin-top: 20px; }
+
+            /* 2. Maximum horizontal stretch for tiny icons */
+            .grid-wrapper { width: 400%; left: -150%; }
+            .scrolling-grid {
+                grid-template-columns: repeat(36, 1fr); /* Super wide, small tiles */
+                gap: 10px; padding: 10px;
+            }
+        }
+
+        /* HORIZONTAL SCROLL ANIMATION (Left to Right) */
+        @keyframes scrollRight { 
+            0% { transform: translateX(-30%); } 
+            100% { transform: translateX(0%); } 
+        }
+
     </style>
 </head>
 <body>
@@ -176,7 +234,7 @@
                 <path class="wifi-path" d="M 0 15 A 45 45 0 0 1 0 85" />
             </svg>
         </div>
-        <div class="brand-text">Breathe in. You're Among Music People!</div>
+        <div class="brand-text">Audikite - Music People's Social Arena</div>
     </div>
 
     <div class="scene-blackout"></div>
