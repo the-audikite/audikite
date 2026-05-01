@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audikite</title>
-    
+    <link rel="icon" type="image/png" href="favicon.png">
+
     <link rel="preload" href="audikite-logo/logo.png" as="image">
     <link rel="preload" href="grid-icons/grid1.png" as="image">
     <link rel="preload" href="grid-icons/grid2.png" as="image">
@@ -132,6 +133,7 @@
             content: ''; position: absolute; bottom: -8px; left: 0; width: 100%; height: 2px;
             background-color: #14e7fa; box-shadow: 0 0 10px #14e7fa, 0 0 20px rgba(20, 231, 250, 0.5); border-radius: 2px;
         }
+        .text-mobile { display: none; }
         @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 
         /* =========================================
@@ -145,21 +147,24 @@
            RESPONSIVE DESIGN & MOBILE GRID
            ========================================= */
 
-        /* TABLET (1024px and below) */
+       /* TABLET (1024px and below) */
         @media (max-width: 1024px) {
-            /* 1. Scale down the center elements */
             .center-logo { height: 200px; }
             .wifi-wave { width: 70px; height: 110px; }
             .left-wave { margin-right: 15px; } 
             .right-wave { margin-left: 15px; }
             .brand-text { font-size: 1.8rem; margin-top: 40px; text-align: center; }
+            
+            /* --- THE NEW TEXT & UNDERLINE RULES --- */
+            .text-desktop { display: none; } 
+            .text-mobile { display: block; } 
+            .brand-text::after { display: none; } 
 
-            /* 2. Convert Grid to Horizontal Left-to-Right */
             .grid-wrapper { width: 200%; height: 120%; top: -10%; left: -50%; }
             .scrolling-grid {
-                grid-template-columns: repeat(18, 1fr); /* Reflows the 108 tiles wider */
+                grid-template-columns: repeat(18, 1fr); 
                 gap: 20px; padding: 20px;
-                animation: scrollRight 30s linear infinite; /* New horizontal animation */
+                animation: scrollRight 30s linear infinite; 
             }
         }
 
@@ -176,7 +181,6 @@
                 animation: scrollRight 45s linear infinite; 
                 align-content: center; 
             }
-            /* OLD PHONE FIX: 500vw / 45 columns = 11.1vw. Forces perfect squares. */
             .tile { height: 11vw; } 
         }
 
@@ -192,7 +196,6 @@
                 gap: 10px; padding: 10px;
                 align-content: center; 
             }
-            /* OLD PHONE FIX: 600vw / 45 columns = 13.3vw. Forces perfect squares. */
             .tile { height: 13vw; } 
         }
 
@@ -239,7 +242,10 @@
                 <path class="wifi-path" d="M 0 15 A 45 45 0 0 1 0 85" />
             </svg>
         </div>
-        <div class="brand-text">Audikite - Music People's Social Arena</div>
+        <div class="brand-text">
+            <span class="text-desktop">Audikite - Music People's Social Arena</span>
+            <span class="text-mobile">Audikite</span>
+        </div>
     </div>
 
     <div class="scene-blackout"></div>
