@@ -252,14 +252,33 @@
 
     <div class="scene-blackout"></div>
 
-    <script>
+   <script>
         window.onload = () => {
             const curtain = document.getElementById('curtain');
+            
+            // THE SPEED CHECKER: Tap into the browser's native network API
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            
+            // Default cinematic timing (Fast networks)
+            let redirectDelay = 5600; 
+
+            // If the network exists, check if it's slow or if Data Saver is ON
+            if (connection) {
+                if (connection.saveData || connection.effectiveType === '3g' || connection.effectiveType === '2g' || connection.effectiveType === 'slow-2g') {
+                    
+                    // LITE MODE ACTIVATED: Speed up the redirect to 2.5 seconds
+                    redirectDelay = 2500; 
+                    
+                    // Nuke the heavy 90-image grid from the code entirely to save battery & RAM
+                    const grid = document.querySelector('.grid-wrapper');
+                    if (grid) grid.remove(); 
+                }
+            }
             
             // Step 1: Tell browser to calculate graphics layout
             document.body.classList.add('is-ready');
             
-            // Step 2: Fade out the black curtain smoothly to reveal the pre-calculated scene
+            // Step 2: Fade out the black curtain smoothly to reveal the scene
             setTimeout(() => {
                 curtain.style.opacity = '0';
             }, 100);
@@ -269,11 +288,12 @@
                 curtain.style.display = 'none';
             }, 500);
             
-            // Step 4: Fire instant cache-redirect (No Loading Bar)
+            // Step 4: Fire instant cache-redirect using our dynamic speed delay
             setTimeout(() => {
                 window.location.replace('home/home.html');
-            }, 5600);
+            }, redirectDelay);
         };
     </script>
+
 </body>
 </html>
