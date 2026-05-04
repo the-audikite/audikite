@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audikite - Feed</title>
+    
+    <!-- URL MASK HACK -->
+    <script>
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', '/');
+        }
+    </script>
+
+    <!-- Lenis Library for Buttery Scroll -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
+    
+    <!-- Link to your daily posts -->
+    <script src="feed-data.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Instrument Sans for body, Manrope for Titles -->
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Manrope:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        /* =========================================
+           BASE & VISUAL IDENTITY
+           ========================================= */
+        :root {
+            --bg-dark: #1a1a1a;
+            --text-light: #f5f5f5;
+            --cyan-accent: #14e7fa;
+            --card-bg: rgba(255, 255, 255, 0.08); /* Whitish-grey glass */
+            --card-border: rgba(255, 255, 255, 0.15); /* 1.5px thread border */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Instrument Sans', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 1. Grainy Noise ONLY on the background (z-index 0) */
+        .noise-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 0; opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* =========================================
+           THE DUAL PHYSICS CURSOR
+           ========================================= */
+        .cursor-dot {
+            position: fixed; top: 0; left: 0; width: 6px; height: 6px;
+            background: var(--text-light); border-radius: 50%;
+            pointer-events: none; z-index: 10000;
+            transform: translate(-50%, -50%);
+        }
+        .cursor-outline {
+            position: fixed; top: 0; left: 0; width: 40px; height: 40px;
+            border: 1px solid var(--text-light); border-radius: 50%;
+            pointer-events: none; z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, border-color 0.2s;
+            will-change: transform;
+        }
+        .hover-target:hover ~ .cursor-outline, a:hover ~ .cursor-outline {
+            width: 60px; height: 60px; border-color: var(--cyan-accent);
+        }
+
+        /* =========================================
+           THE GHOST HEADER CEILING
+           ========================================= */
+        .ghost-ceiling {
+            position: fixed; top: 0; left: 0; width: 100%; height: 180px;
+            background: linear-gradient(to bottom, #1a1a1a 40%, transparent 100%);
+            z-index: 90; pointer-events: none;
+        }
+        .master-logo {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 100; height: 40px; width: auto; opacity: 0.9;
+            transition: opacity 0.3s, filter 0.3s;
+        }
+        .master-logo:hover { opacity: 1; filter: drop-shadow(0 0 15px rgba(20, 231, 250, 0.4)); }
+
+        /* =========================================
+           FEED & SOCIAL CARD ARCHITECTURE
+           ========================================= */
+        .feed-wrapper {
+            position: relative; z-index: 10;
+            width: 100%; max-width: 550px; margin: 0 auto;
+            padding-top: 220px; padding-bottom: 100px;
+        }
+        .post-container { margin-bottom: 70px; display: flex; flex-direction: column; gap: 8px; }
+        
+        .post-meta {
+            color: #888; font-size: 0.85rem; letter-spacing: 1px;
+            padding-left: 5px;
+        }
+
+        /* The Elevated Glass Plate */
+        .post-card {
+            width: 100%; padding: 25px;
+            background: var(--card-bg); border: 1.5px solid var(--card-border);
+            border-radius: 16px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            transition: border 0.3s;
+        }
+        .post-card:hover { border-color: rgba(20, 231, 250, 0.3); }
+
+        /* Social Headers */
+        .post-user { display: flex; align-items: center; margin-bottom: 20px; gap: 10px; }
+        .user-dp { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #333; }
+        .username { font-weight: 500; font-size: 1rem; color: #ddd; }
+        .user-badge { height: 14px; width: auto; margin-left: -4px; }
+
+        .post-title { 
+            font-family: 'Manrope', sans-serif; font-weight: 700; 
+            font-size: 1.1rem; margin-bottom: 10px; color: var(--text-light);
+        }
+        .post-content { color: #bbb; line-height: 1.6; font-size: 1rem; margin-bottom: 25px; }
+
+        /* Social Actions */
+        .post-actions { display: flex; gap: 20px; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; }
+        .action-btn { 
+            background: none; border: none; color: #888; font-size: 1.1rem;
+            display: flex; align-items: center; gap: 6px; transition: color 0.2s; 
+            font-family: inherit;
+        }
+        .like-btn:hover { color: var(--cyan-accent); }
+        .action-btn.liked { color: var(--cyan-accent); }
+
+        /* =========================================
+           FOOTER & CINEMATIC TRANSITIONS
+           ========================================= */
+        .site-footer {
+            min-height: 80vh; width: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 40px;
+            position: relative; z-index: 10;
+        }
+        .glass-search {
+            width: 80%; max-width: 400px; padding: 15px 25px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--card-border);
+            border-radius: 30px; color: var(--text-light); font-size: 1rem; outline: none;
+            transition: border 0.3s;
+        }
+        .glass-search:focus { border-color: var(--cyan-accent); }
+        
+        .footer-links { display: flex; gap: 30px; color: #777; font-size: 0.9rem; }
+        .footer-links a { color: inherit; text-decoration: none; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--cyan-accent); }
+
+        /* The Screen Blackout for smooth routing */
+        .page-transition-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #1a1a1a; z-index: 99999; pointer-events: none;
+            opacity: 0; transition: opacity 0.5s ease-in-out;
+        }
+        .page-transition-overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* =========================================
+           ANTI-DOOMSCROLL MODAL
+           ========================================= */
+        .doomscroll-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(26, 26, 26, 0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .doomscroll-modal.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-content {
+            background: var(--bg-dark); border: 1px solid var(--cyan-accent);
+            padding: 40px; border-radius: 20px; display: flex; gap: 20px;
+            transform: translateY(20px); transition: transform 0.4s ease;
+        }
+        .doomscroll-modal.active .modal-content { transform: translateY(0); }
+
+        .modal-btn {
+            background: rgba(255,255,255,0.05); color: var(--text-light);
+            border: 1px solid var(--card-border); padding: 15px 30px;
+            border-radius: 12px; font-size: 1.1rem; font-family: inherit; transition: all 0.3s;
+        }
+        .modal-btn:hover { border-color: var(--cyan-accent); color: var(--cyan-accent); }
+
+        .dismiss-text {
+            position: absolute; bottom: 40px; color: #666; font-size: 0.9rem;
+            letter-spacing: 1px; animation: pulse 2s infinite; pointer-events: none;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        /* Responsive Fixes */
+        @media (max-width: 768px) {
+            * { cursor: auto; } 
+            .cursor-dot, .cursor-outline { display: none !important; }
+            .feed-wrapper { padding: 150px 15px 100px 15px; }
+            .modal-content { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="noise-overlay"></div>
+    <div class="page-transition-overlay" id="transitionScreen"></div>
+
+    <!-- The Ghost Ceiling -->
+    <div class="ghost-ceiling"></div>
+    <img src="../audikite-logo/logo.png" alt="Audikite Logo" class="master-logo hover-target" id="masterNav">
+
+    <!-- The Dynamic Feed -->
+    <div class="feed-wrapper" id="feed-root">
+        <!-- Javascript injects feed-data.js here automatically -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer" id="footer">
+        <input type="text" class="glass-search hover-target" placeholder="Search the archive...">
+        <div class="footer-links">
+            <a href="../contact-audikite/contact-audikite.html" class="hover-target cinematic-link">Contact Audikite</a>
+            <a href="../privacy-policy/privacy-policy.html" class="hover-target cinematic-link">Privacy Policy</a>
+            <a href="../terms-and-conditions/tnc.html" class="hover-target cinematic-link">Terms And Conditions</a>
+        </div>
+    </footer>
+
+    <!-- Doomscroll Modal -->
+    <div class="doomscroll-modal" id="doomModal">
+        <div class="modal-content" id="modalBox">
+            <button class="modal-btn hover-target">Search Post?</button>
+            <button class="modal-btn hover-target">Zoned Out?</button>
+        </div>
+        <div class="dismiss-text">Click anywhere to exit</div>
+    </div>
+
+    <!-- Dual Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <script>
+        /* ============================================================
+           1. BUILD THE FEED FROM JSON
+           ============================================================ */
+        const feedRoot = document.getElementById('feed-root');
+        
+        // Loop through the posts defined in feed-data.js
+        if(typeof audikitePosts !== 'undefined') {
+            audikitePosts.forEach(post => {
+                
+                // Check Local Storage for Like Status
+                const storageKey = 'audikite_liked_' + post.id;
+                const isLiked = localStorage.getItem(storageKey) === 'true';
+                const currentLikes = isLiked ? (post.likes + 1) : post.likes;
+                const likeClass = isLiked ? 'liked' : '';
+
+                const cardHTML = `
+                    <div class="post-container">
+                        <div class="post-meta">• ${post.id} • ${post.date} , ${post.location} .</div>
+                        <div class="post-card">
+                            <div class="post-user">
+                                <img src="../audikite-logo/logo.png" class="user-dp" alt="DP">
+                                <span class="username">${post.username}</span>
+                                <img src="example.png" class="user-badge" alt="Badge">
+                            </div>
+                            <div class="post-title">${post.title}</div>
+                            <div class="post-content">${post.content}</div>
+                            <div class="post-actions">
+                                <button class="action-btn like-btn hover-target ${likeClass}" data-id="${post.id}" data-base-likes="${post.likes}">
+                                    ❤️ <span class="like-count">${currentLikes}</span>
+                                </button>
+                                <button class="action-btn hover-target">🔗</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                feedRoot.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        /* ============================================================
+           2. LOCAL STORAGE LIKE LOGIC
+           ============================================================ */
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const postId = this.getAttribute('data-id');
+                const baseLikes = parseInt(this.getAttribute('data-base-likes'));
+                const storageKey = 'audikite_liked_' + postId;
+                const countSpan = this.querySelector('.like-count');
+
+                // If they haven't liked it yet on this device
+                if (localStorage.getItem(storageKey) !== 'true') {
+                    localStorage.setItem(storageKey, 'true');
+                    this.classList.add('liked');
+                    countSpan.innerText = baseLikes + 1;
+                }
+            });
+        });
+
+        /* ============================================================
+           3. CINEMATIC PAGE TRANSITIONS
+           ============================================================ */
+        const transitionScreen = document.getElementById('transitionScreen');
+        document.querySelectorAll('.cinematic-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault(); // Stop instant clunky jump
+                const targetUrl = this.getAttribute('href');
+                transitionScreen.classList.add('active'); // Fade to black
+                
+                setTimeout(() => {
+                    window.location.href = targetUrl; // Route after fade
+                }, 500); 
+            });
+        });
+
+        /* ============================================================
+           4. DUAL PHYSICS CURSOR
+           ============================================================ */
+        const dot = document.querySelector('.cursor-dot');
+        const outline = document.querySelector('.cursor-outline');
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let outlineX = mouseX;
+        let outlineY = mouseY;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            // Dot moves instantly
+            dot.style.left = mouseX + 'px';
+            dot.style.top = mouseY + 'px';
+        });
+
+        function animateCursor() {
+            // Outline trails with lerp delay (0.15)
+            outlineX += (mouseX - outlineX) * 0.15;
+            outlineY += (mouseY - outlineY) * 0.15;
+            outline.style.left = outlineX + 'px';
+            outline.style.top = outlineY + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        if (window.matchMedia("(pointer: fine)").matches) { animateCursor(); }
+
+        /* ============================================================
+           5. BUTTERY SCROLL & DOOMSCROLL LOGIC
+           ============================================================ */
+        const lenis = new Lenis({ duration: 1.2, smoothWheel: true });
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+
+        document.getElementById('masterNav').addEventListener('click', () => {
+            lenis.scrollTo('#footer');
+        });
+
+        let lastScrollY = window.scrollY;
+        let scrollDist = 0;
+        let isModalOpen = false;
+        const modal = document.getElementById('doomModal');
+        const modalBox = document.getElementById('modalBox');
+
+        // Lengthened duration check to 3.5 seconds
+        setInterval(() => {
+            if (!isModalOpen && scrollDist > 5000) { triggerDoomscrollModal(); }
+            scrollDist = 0; 
+        }, 3500);
+
+        lenis.on('scroll', () => {
+            if (isModalOpen) return;
+            let currentScrollY = window.scrollY;
+            scrollDist += Math.abs(currentScrollY - lastScrollY);
+            lastScrollY = currentScrollY;
+        });
+
+        function triggerDoomscrollModal() {
+            isModalOpen = true;
+            lenis.stop(); 
+            modal.classList.add('active');
+        }
+
+        modal.addEventListener('click', (e) => {
+            if (!modalBox.contains(e.target)) {
+                modal.classList.remove('active');
+                isModalOpen = false;
+                lenis.start(); 
+            }
+        });
+    </script>
+</body>
+</html>
