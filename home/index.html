@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audikite - Hub</title>
+
+<!-- URL MASK HACK -->
+    <script>
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState({}, '', '/');
+        }
+    </script>
     
     <!-- Lenis Library for Buttery Scroll -->
     <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
@@ -312,20 +319,41 @@
             });
         });
 
-        /* ============================================================
-           3. CINEMATIC PAGE TRANSITIONS
+       /* ============================================================
+           3. CINEMATIC PAGE TRANSITIONS & CROSS-BROWSER FIX
            ============================================================ */
         const transitionScreen = document.getElementById('transitionScreen');
+
+        // The normal click routing
         document.querySelectorAll('.cinematic-link').forEach(link => {
             link.addEventListener('click', function(e) {
-                e.preventDefault(); // Stop instant clunky jump
-                const targetUrl = this.getAttribute('href');
+                e.preventDefault(); 
+                const targetUrl = this.href; 
                 transitionScreen.classList.add('active'); // Fade to black
                 
                 setTimeout(() => {
-                    window.location.href = targetUrl; // Route after fade
+                    window.location.assign(targetUrl); // Safely route after fade
                 }, 500); 
             });
+        });
+
+        // FIX 1: Remove black screen if they use the Back Button
+        window.addEventListener('pageshow', function(event) {
+            transitionScreen.classList.remove('active');
+        });
+
+        // FIX 2: THE SECRET WEAPON 
+        // This fires the exact millisecond you leave the page. 
+        // It strips the black screen away right before Chrome/Safari takes its "snapshot"
+        window.addEventListener('pagehide', function() {
+            transitionScreen.classList.remove('active');
+        });
+
+        // FIX 3: Fallback safety timer
+        window.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                transitionScreen.classList.remove('active');
+            }
         });
 
         /* ============================================================
