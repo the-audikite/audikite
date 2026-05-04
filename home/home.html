@@ -239,15 +239,31 @@
 
     <script>
         /* ============================================================
-           1. BUILD THE FEED FROM JSON
+           1. BUILD THE FEED FROM JSON (With Developer X-Ray)
            ============================================================ */
         const feedRoot = document.getElementById('feed-root');
         
-        // Loop through the posts defined in feed-data.js
-        if(typeof audikitePosts !== 'undefined') {
+        // ERROR SCENARIO A: The file is 404 Missing (Wrong folder or URL Mask is messing it up)
+        if (window.feedDataFailed) {
+            feedRoot.innerHTML = `
+                <div style="text-align:center; padding: 40px; border: 1px solid #ff4444; border-radius: 16px; background: rgba(255,0,0,0.05);">
+                    <h2 style="color: #ff4444; font-family: 'Manrope', sans-serif;">🚨 File Not Found 🚨</h2>
+                    <p style="margin-top: 15px; color: #ddd;">The browser cannot find <b>feed-data.js</b>.</p>
+                    <p style="margin-top: 10px; color: #888; font-size: 0.9rem;">1. Did you delete the URL Mask Hack?<br>2. Did you rename home.html to index.html?<br>3. Is the file named exactly feed-data.js?</p>
+                </div>`;
+        } 
+        // ERROR SCENARIO B: The file loaded, but the code inside is broken (Syntax error)
+        else if (typeof audikitePosts === 'undefined') {
+            feedRoot.innerHTML = `
+                <div style="text-align:center; padding: 40px; border: 1px solid #ffb84d; border-radius: 16px; background: rgba(255, 184, 77, 0.05);">
+                    <h2 style="color: #ffb84d; font-family: 'Manrope', sans-serif;">⚠️ Syntax Error ⚠️</h2>
+                    <p style="margin-top: 15px; color: #ddd;"><b>feed-data.js</b> was found, but the code inside it is broken.</p>
+                    <p style="margin-top: 10px; color: #888; font-size: 0.9rem;">Check your file for a missing comma, unclosed quote marks, or deleted brackets.</p>
+                </div>`;
+        } 
+        // SCENARIO C: Everything is perfect, build the feed!
+        else {
             audikitePosts.forEach(post => {
-                
-                // Check Local Storage for Like Status
                 const storageKey = 'audikite_liked_' + post.id;
                 const isLiked = localStorage.getItem(storageKey) === 'true';
                 const currentLikes = isLiked ? (post.likes + 1) : post.likes;
