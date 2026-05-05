@@ -2,21 +2,13 @@
 const audikitePosts = [
     {
         id: "01",
-        date: "4 . 5 . 2026 - 10:00",
-        location: "📍 India",
+        date: "5 . 5 . 2026 - 12:00",
+        location: "📍 Chennai, India",
         username: "@audikite",
-        title: "The Magic of Reverb",
-        content: "Reverb isn't just an echo, it's the physical space your track lives in. When building a vocal chain, try sending your reverb to a separate bus and EQing the low-end out of the wet signal.",
+        title: "Jazz is actually calming or vibing?",
+        content: "Jazz. It is one of famous genre of the world. People same it is very calm to relax in the evening, but some people tell that Jazz is actually keeping them vibing. Is it really keeping them vibe and dancing? I don't know. ",
         likes: 184
     },
-    {
-        id: "01",
-        date: "3 . 5 . 2026 - 12:25",
-        location: "📍 India",
-        username: "@audikite",
-        title: "Welcome to the Social Arena",
-        content: "We are officially live. This is the new standard for audio engineers, producers, and artists to connect without the noise.",
-        likes: 342
-    }
+    
     
 ];
