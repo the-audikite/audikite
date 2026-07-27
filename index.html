@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audikite | Music Browser</title>
+    <title>Audikite</title>
     
     <!-- Lexend Deca Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,6 +68,9 @@
             font-weight: 600;
             letter-spacing: -0.04em;
             user-select: none;
+            /* Subtle bottom 5% fade */
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0) 100%);
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 95%, rgba(0, 0, 0, 0) 100%);
         }
 
         .search-container {
@@ -134,7 +137,6 @@
         <div class="brand-logo">Audikite</div>
         
         <div class="search-container">
-            <!-- The central engine of the Music Browser -->
             <input type="text" class="search-input" placeholder="Find tuners, sheets, practice tools..." autocomplete="off" autofocus>
         </div>
 
