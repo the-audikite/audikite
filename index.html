@@ -14,24 +14,12 @@
         :root {
             /* Core Palette */
             --bg-dark: #07090e;
-            --bg-light: #e4e4e6;
-            --brand-cyan: #14e7fa;
+            --text-light: #e4e4e6;
             
-            /* Dynamic Theme Variables (Defaulting to Dark Mode) */
+           /* Geometric & Component Variables */
             --bg-color: var(--bg-dark);
-            --text-color: var(--bg-light);
-            --surface-color: rgba(228, 228, 230, 0.03);
-            --surface-border: rgba(228, 228, 230, 0.1);
-        }
-
-        /* Automatic Light Mode Support */
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg-color: var(--bg-light);
-                --text-color: var(--bg-dark);
-                --surface-color: rgba(7, 9, 14, 0.04);
-                --surface-border: rgba(7, 9, 14, 0.15);
-            }
+            --text-color: var(--text-light);
+            --search-pill-bg: rgba(128, 130, 138, 0.15); /* Translucent 0.15, adapts safely to light/dark */
         }
 
         * {
@@ -53,101 +41,512 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        main {
+        /* --- AMBIENT WIREFRAME BACKGROUND --- */
+        .ambient-environment {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1; /* Strictly behind all interactive content */
+            pointer-events: none; /* Never blocks clicks/touches */
+            overflow: hidden;
+            /* Fades the mesh smoothly into the background at the edges */
+            -webkit-mask-image: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0) 80%);
+            mask-image: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0) 80%);
+        }
+
+        .wireframe-mesh {
             width: 100%;
-            max-width: 720px;
-            padding: 2rem;
+            height: 100%;
+            opacity: 0.7; /* Controls overall presence */
+        }
+
+        /* --- NODE GLOW ANIMATION --- */
+        @keyframes starGlow {
+            0%, 50%, 100% {
+                /* 5-second rest phase (50% to 100% of 10s cycle) */
+                opacity: 0.4;
+                filter: drop-shadow(0 0 0px rgba(77, 255, 207, 0));
+            }
+            25% {
+                /* Smooth, visible peak over the 5-second glow phase */
+                opacity: 0.9;
+                filter: drop-shadow(0 0 10px rgba(77, 255, 207, 0.7));
+            }
+        }
+
+        .mesh-nodes circle {
+            /* 10s total duration: 5s smooth glow, 5s rest */
+            animation: starGlow 10s infinite ease-in-out;
+        }
+
+        /* Fallback for reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .mesh-nodes circle {
+                animation: none !important;
+                opacity: 0.5;
+            }
+        }
+
+        .mesh-mobile {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .mesh-desktop {
+                display: none;
+            }
+            .mesh-mobile {
+                display: block;
+            }
+            .ambient-environment {
+                /* Shifts the focal point of the fade slightly higher for mobile */
+                -webkit-mask-image: radial-gradient(ellipse at 50% 40%, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 90%);
+                mask-image: radial-gradient(ellipse at 50% 40%, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 90%);
+            }
+        }
+
+    
+        /* --- GEOMETRIC LAYOUT & RESPONSIVE CONTAINERS --- */
+        .search-section {
+            width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2.5rem;
+            justify-content: center;
+            gap: clamp(4rem, 10vh, 7rem); /* Increased gap: moves text up, search down */
         }
 
-        .brand-logo {
-            font-size: 2.25rem;
-            font-weight: 600;
-            letter-spacing: -0.04em;
+        /* --- TYPOGRAPHY COMPOSITION --- */
+        .main-heading {
+            display: flex;
+            flex-direction: column; /* Stacked vertically for all devices */
+            align-items: flex-start; /* Flush left alignment */
+            justify-content: center;
+            width: clamp(320px, 75vw, 1000px); /* Exactly matches search bar width for perfect geometric alignment */
+            max-width: 100%;
+            gap: 0.1em; /* Tighter gap for stacked text */
+            font-size: clamp(3rem, 6vw, 5.25rem);
+            color: var(--text-color);
+            letter-spacing: 0.02em;
             user-select: none;
-            line-height: 0.85; /* Shrinks the bounding box to hug the bottom of the letters */
-            background: linear-gradient(to bottom, var(--text-color) 65%, var(--bg-color) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .search-container {
-            width: 100%;
+        .static-phrase {
+            font-weight: 200;
+        }
+
+        .dynamic-phrase {
             position: relative;
+            display: inline-block;
+            text-align: left;
+            font-weight: 100;
+            color: #7657ff; /* Vivid purple */
+            text-shadow: 0 0 24px rgba(118, 87, 255, 0.5); /* Subtle purple glow */
+            /* Blurring this element via the transition naturally creates a purple mist effect */
         }
 
-        .search-input {
+        /* Hidden spacer to hold layout height and prevent shifting */
+        .phrase-spacer {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .phrase-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            white-space: nowrap;
+            opacity: 0;
+            filter: blur(12px);
+            transition: opacity 2s ease-in-out, filter 2s ease-in-out; /* Smoother easing */
+            pointer-events: none;
+        }
+
+        .phrase-item.active {
+            opacity: 1;
+            filter: blur(0);
+        }
+
+        /* --- CENTRAL SEARCH COMPOSITION --- */
+        .search-composition {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: clamp(320px, 75vw, 1000px); /* Massive width */
+            max-width: 100%;
+        }
+
+        .search-pill {
             width: 100%;
-            padding: 1.25rem 1.5rem;
-            font-size: 1.125rem;
+            padding: clamp(2rem, 4vh, 3rem) clamp(2rem, 4vw, 3.5rem); /* Massive height */
+            padding-right: 6rem; /* Safe space so typing doesn't hit the massive icon */
+            font-size: clamp(1.25rem, 2vw, 1.75rem); /* Massive inner text */
             font-family: inherit;
-            font-weight: 400;
-            background-color: var(--surface-color);
-            border: 1px solid var(--surface-border);
-            border-radius: 16px;
+            font-weight: 300;
+            background-color: var(--search-pill-bg);
+            border: 1px solid var(--surface-border); /* Subtle definition */
+            border-radius: 100px;
             color: var(--text-color);
             outline: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
-        .search-input::placeholder {
+        .search-pill::placeholder {
             color: var(--text-color);
-            opacity: 0.4;
+            opacity: 0.5;
         }
 
-        .search-input:focus {
-            border-color: var(--brand-cyan);
-            box-shadow: 0 0 0 4px rgba(20, 231, 250, 0.1);
-            background-color: transparent;
+        .search-pill:focus {
+            background-color: rgba(128, 130, 138, 0.25);
+            border-color: rgba(228, 228, 230, 0.3);
         }
 
-        .quick-actions {
+        .search-action {
+            position: absolute;
+            right: clamp(1.5rem, 3vw, 2.5rem); /* Scaled anchor spacing */
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.5rem;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, transform 0.3s ease;
             display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
+            align-items: center;
             justify-content: center;
         }
 
-        .action-chip {
-            padding: 0.75rem 1.5rem;
-            border-radius: 100px;
-            border: 1px solid var(--surface-border);
-            background: transparent;
-            color: var(--text-color);
-            font-family: inherit;
-            font-size: 0.875rem;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .search-action:hover {
+            opacity: 1;
+            transform: scale(1.05);
         }
 
-        .action-chip:hover {
-            background-color: var(--surface-color);
-            border-color: var(--text-color);
-            transform: translateY(-1px);
+        .search-action svg {
+            width: clamp(32px, 3vw, 48px); /* Massive icon to match the pill */
+            height: clamp(32px, 3vw, 48px);
+            fill: currentColor;
+        }
+
+        @media (max-width: 768px) {
+            .main-heading {
+                width: 90vw; /* Syncs with mobile search bar width */
+                font-size: clamp(2.5rem, 8vw, 3.5rem); /* Scaled vertical text */
+            }
+            
+            .search-composition {
+                width: 90vw; /* Massive proportional width on vertical screens */
+            }
         }
     </style>
 </head>
 <body>
 
-    <main>
-        <div class="brand-logo">Audikite</div>
-        
-        <div class="search-container">
-            <input type="text" class="search-input" placeholder="Find tuners, sheets, practice tools..." autocomplete="off" autofocus>
-        </div>
+   <body>
 
-        <div class="quick-actions">
-            <button class="action-chip">Practice</button>
-            <button class="action-chip">Tune</button>
-            <button class="action-chip">Learn</button>
+    <div class="ambient-environment" aria-hidden="true">
+        <!-- WIDE DESKTOP MESH -->
+        <svg id="meshDesktop" class="wireframe-mesh mesh-desktop" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <g class="mesh-lines" stroke="rgba(77, 255, 207, 0.25)" stroke-width="1" fill="none" stroke-linejoin="round"></g>
+            <g class="mesh-nodes" fill="rgba(77, 255, 207, 0.5)"></g>
+        </svg>
+
+        <!-- NARROW MOBILE MESH -->
+        <svg id="meshMobile" class="wireframe-mesh mesh-mobile" viewBox="0 0 800 1200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <g class="mesh-lines" stroke="rgba(77, 255, 207, 0.25)" stroke-width="1" fill="none" stroke-linejoin="round"></g>
+            <g class="mesh-nodes" fill="rgba(77, 255, 207, 0.5)"></g>
+        </svg>
+    </div>
+    
+    <!-- Restored Geometric Container -->
+    <main class="search-section">
+        <h1 class="main-heading">
+            <span class="static-phrase">Search Anything Music</span>
+            <span class="dynamic-phrase" aria-live="polite">
+                <!-- Uses the longest phrase to hold structural height/width -->
+                <span class="phrase-spacer" aria-hidden="true">Online Tuners</span>
+                <span class="phrase-item active">Music Scores</span>
+                <span class="phrase-item">Online Tuners</span>
+                <span class="phrase-item">Key of Song</span>
+            </span>
+        </h1>
+        
+        <div class="search-composition">
+            <input type="text" class="search-pill" id="searchInput" placeholder="" autocomplete="off">
+            
+            <button class="search-action" aria-label="Search">
+                <!-- Clean Quaver / Eighth-note SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+            </button>
         </div>
     </main>
+
+    <script>
+        // --- OPTICAL HEADING TRANSITION ---
+        const phraseItems = document.querySelectorAll('.phrase-item');
+        let phraseIndex = 0;
+
+        setInterval(() => {
+            phraseItems[phraseIndex].classList.remove('active');
+            phraseIndex = (phraseIndex + 1) % phraseItems.length;
+            phraseItems[phraseIndex].classList.add('active');
+        }, 3500);
+
+        // --- SEARCH PLACEHOLDER SYSTEM ---
+        const searchInput = document.getElementById('searchInput');
+        const placeholders = [
+            "Perfect by Ed Sheeran music sheet", "Tamil Song Music Scores", 
+            "Violin Tuner Online", "Piano Sight Reading Exercises", 
+            "Guitar Chord Practice", "Metronome Online", 
+            "Find Key of a Song", "Ear Training for Chords", 
+            "Intermediate Piano Pieces", "Guitar Backing Tracks", 
+            "Interval Ear Trainer", "Bass Tuner Online", 
+            "Music Theory Exercises", "Rhythm Training Online", 
+            "Flute Fingering Chart", "Chord Progression Analyser", 
+            "Sight Singing Exercises", "Free Sheet Music for Violin", 
+            "Vocal Warm Up Exercises", "Carnatic Violin Practice"
+        ];
+        
+        let placeholderIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let typeTimeout;
+        let isFocused = false;
+
+        function typePlaceholder() {
+            if (isFocused) return; // Yield priority to user
+
+            const currentText = placeholders[placeholderIndex];
+            
+            if (isDeleting) {
+                searchInput.setAttribute('placeholder', currentText.substring(0, charIndex - 1));
+                charIndex--;
+            } else {
+                searchInput.setAttribute('placeholder', currentText.substring(0, charIndex + 1));
+                charIndex++;
+            }
+
+            // Math: Total transition time (2000ms) divided by string length = ms per character
+            let typeSpeed = 2000 / currentText.length;
+
+            if (!isDeleting && charIndex === currentText.length) {
+                // Full string written: hold for 4 seconds
+                typeSpeed = 4000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                // String deleted: move to next, brief pause before typing
+                isDeleting = false;
+                placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+                typeSpeed = 200; 
+            }
+
+            typeTimeout = setTimeout(typePlaceholder, typeSpeed);
+        }
+
+        searchInput.addEventListener('focus', () => {
+            isFocused = true;
+            clearTimeout(typeTimeout);
+            searchInput.setAttribute('placeholder', '');
+        });
+
+        searchInput.addEventListener('blur', () => {
+            if (searchInput.value.trim() === '') {
+                isFocused = false;
+                isDeleting = false;
+                charIndex = 0;
+                typePlaceholder();
+            }
+        });
+
+        // Initialize
+        typePlaceholder();
+
+        // --- AMBIENT WIREFRAME ANIMATION SYSTEM ---
+        (function() {
+            // 1. Define the approved static geometry
+            const desktopBase = [
+                [[0,300],[150,280],[300,320],[450,270],[600,310],[750,290],[900,330],[1050,280],[1200,310],[1350,290],[1500,320]],
+                [[-50,380],[120,350],[290,410],[460,340],[630,420],[800,370],[970,440],[1140,360],[1310,430],[1480,350],[1650,420]],
+                [[-100,480],[90,450],[280,550],[470,430],[660,570],[850,460],[1040,590],[1230,450],[1420,560],[1610,460],[1800,580]],
+                [[-150,620],[60,580],[270,750],[480,550],[690,780],[900,590],[1110,800],[1320,570],[1530,760],[1740,590],[1950,790]],
+                [[-200,800],[20,750],[250,1050],[490,720],[730,1080],[970,770],[1210,1100],[1450,750],[1690,1050],[1930,760],[2170,1080]],
+                [[-300,1050],[-30,980],[230,1450],[510,950],[790,1480],[1070,1000],[1350,1500],[1630,980],[1910,1450],[2190,990],[2470,1480]]
+            ];
+
+            const mobileBase = [
+                [[0,100],[200,80],[400,120],[600,90],[800,130]],
+                [[-20,180],[180,150],[380,210],[580,160],[780,220]],
+                [[-40,280],[150,240],[350,340],[550,250],[750,360]],
+                [[-60,400],[110,350],[310,500],[510,370],[710,520]],
+                [[-80,550],[60,480],[260,700],[460,510],[660,740]],
+                [[-100,740],[0,640],[200,950],[400,680],[600,990]],
+                [[-120,980],[-70,850],[130,1260],[330,900],[530,1300]],
+                [[-150,1280],[-150,1120],[50,1650],[250,1180],[450,1700]]
+            ];
+
+            const dNodes = [
+                {r:1, cols:[1,2,3,4,5,6,7,8], radius: 1.5},
+                {r:2, cols:[1,2,3,4,5,6,7,8], radius: 2},
+                {r:3, cols:[1,2,3,4,5,6,7,8], radius: 2.5},
+                {r:4, cols:[1,2,3,4,5,6,7], radius: 3}
+            ];
+
+            const mNodes = [
+                {r:1, cols:[1,2,3], radius: 1.5},
+                {r:2, cols:[1,2,3], radius: 2},
+                {r:3, cols:[1,2,3], radius: 2.5},
+                {r:4, cols:[1,2,3], radius: 3}
+            ];
+
+            // 2. Performance: Assemble all lines into a single path string to minimize DOM nodes
+            function buildMeshPaths(grid) {
+                let pathData = "";
+                const rows = grid.length;
+                const cols = grid[0].length;
+
+                // Horizontals
+                for(let r=0; r<rows; r++) {
+                    pathData += `M${grid[r][0].x},${grid[r][0].y} `;
+                    for(let c=1; c<cols; c++) pathData += `L${grid[r][c].x},${grid[r][c].y} `;
+                }
+                // Verticals
+                for(let c=0; c<cols; c++) {
+                    pathData += `M${grid[0][c].x},${grid[0][c].y} `;
+                    for(let r=1; r<rows; r++) pathData += `L${grid[r][c].x},${grid[r][c].y} `;
+                }
+                // Diagonals (Top-Left to Bottom-Right)
+                for(let c=0; c<cols-1; c++) {
+                    pathData += `M${grid[0][c].x},${grid[0][c].y} `;
+                    let r=1, curC=c+1;
+                    while(r<rows && curC<cols) {
+                        pathData += `L${grid[r][curC].x},${grid[r][curC].y} `;
+                        r++; curC++;
+                    }
+                }
+                for(let r=1; r<rows-1; r++) {
+                    pathData += `M${grid[r][0].x},${grid[r][0].y} `;
+                    let curR=r+1, c=1;
+                    while(curR<rows && c<cols) {
+                        pathData += `L${grid[curR][c].x},${grid[curR][c].y} `;
+                        curR++; c++;
+                    }
+                }
+                return pathData;
+            }
+
+            // 3. System Class to handle initialization and geometric updates
+            class AnimatedMesh {
+                constructor(id, baseGrid, nodeConfig) {
+                    this.svg = document.getElementById(id);
+                    if(!this.svg) return;
+                    this.linesGroup = this.svg.querySelector('.mesh-lines');
+                    this.nodesGroup = this.svg.querySelector('.mesh-nodes');
+                    
+                    this.pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    this.linesGroup.appendChild(this.pathElement);
+
+                    // Map grid points with spatial wave offsets
+                    this.grid = baseGrid.map((row, rIdx) => 
+                        row.map((pt, cIdx) => ({
+                            baseX: pt[0], baseY: pt[1],
+                            x: pt[0], y: pt[1],
+                            // Phasing logic ensures points move smoothly relative to neighbors
+                            phaseX: (cIdx * 0.4) + (rIdx * 0.6),
+                            phaseY: (cIdx * 0.5) + (rIdx * 0.8),
+                            // Lower rows have slightly higher amplitude to support perspective depth
+                            ampX: 6 + (rIdx * 1.5),
+                            ampY: 8 + (rIdx * 2.5)
+                        }))
+                    );
+
+                    this.nodes = [];
+                    nodeConfig.forEach(config => {
+                        config.cols.forEach(cIdx => {
+                            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            circle.setAttribute('r', config.radius);
+                            
+                            // Stagger the animation so nodes glow independently across the 10-second cycle
+                            circle.style.animationDelay = `${Math.random() * 10}s`;
+                            
+                            this.nodesGroup.appendChild(circle);
+                            this.nodes.push({ rIdx: config.r, cIdx: cIdx, el: circle });
+                        });
+                    });
+                }
+
+                update(time, prefersReducedMotion) {
+                    const speed = 0.6; // Extremely slow, subconscious movement
+
+                    for(let r=0; r<this.grid.length; r++) {
+                        for(let c=0; c<this.grid[r].length; c++) {
+                            const pt = this.grid[r][c];
+                            if (prefersReducedMotion) {
+                                pt.x = pt.baseX;
+                                pt.y = pt.baseY;
+                            } else {
+                                // Organic sine/cosine deformation
+                                pt.x = pt.baseX + Math.sin(time * speed + pt.phaseX) * pt.ampX;
+                                pt.y = pt.baseY + Math.cos(time * speed * 0.8 + pt.phaseY) * pt.ampY;
+                            }
+                        }
+                    }
+
+                    // Batch DOM updates
+                    this.pathElement.setAttribute('d', buildMeshPaths(this.grid));
+                    
+                    this.nodes.forEach(node => {
+                        const pt = this.grid[node.rIdx][node.cIdx];
+                        node.el.setAttribute('cx', pt.x);
+                        node.el.setAttribute('cy', pt.y);
+                    });
+                }
+            }
+
+            // 4. Initialization & Render Loop
+            const desktopMesh = new AnimatedMesh('meshDesktop', desktopBase, dNodes);
+            const mobileMesh = new AnimatedMesh('meshMobile', mobileBase, mNodes);
+
+            let animationFrame;
+            const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+            function animate(time) {
+                const timeSec = time * 0.001;
+                const isReduced = mediaQuery.matches;
+
+                desktopMesh.update(timeSec, isReduced);
+                mobileMesh.update(timeSec, isReduced);
+
+                // If not reduced and tab is visible, continue loop. Otherwise pause.
+                if (!isReduced && !document.hidden) {
+                    animationFrame = requestAnimationFrame(animate);
+                }
+            }
+
+            requestAnimationFrame(animate);
+
+            // 5. Visibility and Accessibility Safeguards
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && !mediaQuery.matches) {
+                    requestAnimationFrame(animate);
+                }
+            });
+
+            mediaQuery.addEventListener('change', (e) => {
+                if (!e.matches && !document.hidden) {
+                    requestAnimationFrame(animate);
+                } else {
+                    cancelAnimationFrame(animationFrame);
+                    requestAnimationFrame(animate); // Push one final frame to reset to base static geometry
+                }
+            });
+        })();
+    
+    </script>
 
 </body>
 </html>
